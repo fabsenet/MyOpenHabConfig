@@ -1,0 +1,75 @@
+import org.openhab.model.script.actions.Timer
+import org.openhab.core.library.types.*
+import java.lang.Math.*
+  
+var Number LastActiveScene = 1
+var Timer timer = null
+
+rule Startup
+when 
+    System started
+then
+	if (Scene_General.state == Uninitialized) {
+		Scene_General.postUpdate(0)
+	} 
+end
+
+
+rule Scene_Management_Kino
+when
+	Item Scene_General changed
+then
+	if(Scene_General.state == 0){
+		//aus		
+		timer = createTimer(now.plusSeconds(7)) [| sendCommand(Light_2DDiffusor_Links, OFF) ]
+	}
+	else if (Scene_General.state != Undefined){
+		if(timer != null) timer.cancel()
+		LastActiveScene = Scene_General.state as DecimalType
+		logInfo("abc", "LastActiveScene is now "+LastActiveScene.toString())
+		
+		if(Scene_General.state == 1){
+			//Film
+			Light_2DDiffusor_Links.sendCommand(34)
+		} else if(Scene_General.state == 2){
+			//Arbeiten
+			Light_2DDiffusor_Links.sendCommand(100)
+		}
+		
+	}
+end
+
+rule "Fabis Phone Shake"
+when
+	Item fabse_phone_shake received command 
+then
+	if(Scene_General.state == 0){
+		Scene_General.postUpdate(LastActiveScene)
+	}
+	else{
+		Scene_General.postUpdate(0)
+	}
+end
+
+rule "2D Diffusor dimmen"
+when
+	Item Light_2DDiffusor_Links received command 
+then
+	if(receivedCommand instanceof PercentType){
+		val Number percent = (receivedCommand as PercentType).byteValue
+		if(percent == 0){
+			//0 => 0
+			Light_2DDiffusor_Links_hw.sendCommand((receivedCommand as PercentType).byteValue*10)
+		}else{		
+			//exponential! 2^(x/10)
+			val Number abs = Math::pow(2, (percent/10).doubleValue).intValue
+			Light_2DDiffusor_Links_hw.sendCommand(abs)
+		}
+	}
+	else if (receivedCommand==ON){
+		Light_2DDiffusor_Links_hw.sendCommand(1024)
+	}
+	else if (receivedCommand==OFF){
+		Light_2DDiffusor_Links_hw.sendCommand(0)
+	}
+end

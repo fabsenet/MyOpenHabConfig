@@ -1,0 +1,17 @@
+sitemap Main label="Übersicht" 
+{
+	Frame label="Lichter" {
+		Switch item=Light_2DDiffusor_Links label="2D Diffusor"
+		Slider item=Light_2DDiffusor_Links label="2D Diffusor"
+	}
+	Frame label=Szene {
+		Selection item=Scene_General mappings=[0=Aus, 1=Film, 2=Arbeiten]
+		Switch item=Scene_General mappings=[0=Aus, 1=Film, 2=Arbeiten]
+	}
+	Frame label="Geräte" {
+		Text item=xenon_enabled
+		Text item=fabse_phone_enabled
+		Text item=desi_phone_enabled
+	}
+	
+}
