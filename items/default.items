@@ -10,7 +10,7 @@ Group:Switch:OR(ON, OFF) 		Lights 		"Alle Lichter [(%d)]" 								(All)
 
 
 //Switch Light_2DDiffusor_Links 		"2D Diffusor2" 		(GR_Kino, Lights) {gpio="pin:18"}
-Dimmer Light_2DDiffusor_Links 		"2D Diffusor2" 		(GR_Kino, Lights)
+Dimmer Light_2DDiffusor_Links 		"2D Diffusor2" 		(GR_Kino, Lights) {autoupdate="false"}
 //Dimmer Light_2DDiffusor_Links_hw 		"2D Diffusor2" 		{exec=">[ON:gpio pwm 1 1023] >[OFF:gpio pwm 1 0] >[*:gpio pwm 1 %2$s]"}
 Number Light_2DDiffusor_Links_hw 		"2D Diffusor2" 		{exec=">[*:gpio pwm 1 %2$s ]"} 
 

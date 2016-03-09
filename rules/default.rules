@@ -14,17 +14,26 @@ then
 	} 
 end
 
+rule "set gpio to pwm on startup"
+when 
+	System started
+then
+	executeCommandLine("gpio mode 1 pwm")
+	
+	if (Light_2DDiffusor_Links.state == Undefined)	{
+		postUpdate(Light_2DDiffusor_Links, 0)
+	}
+end
 
 rule Scene_Management_Kino
 when
 	Item Scene_General changed
 then
 	if(Scene_General.state == 0){
-		//aus		
-		timer = createTimer(now.plusSeconds(7)) [| sendCommand(Light_2DDiffusor_Links, OFF) ]
+		//aus ist das ziel
+		Light_2DDiffusor_Links.sendCommand(0)
 	}
 	else if (Scene_General.state != Undefined){
-		if(timer != null) timer.cancel()
 		LastActiveScene = Scene_General.state as DecimalType
 		logInfo("abc", "LastActiveScene is now "+LastActiveScene.toString())
 		
@@ -55,21 +64,51 @@ rule "2D Diffusor dimmen"
 when
 	Item Light_2DDiffusor_Links received command 
 then
-	if(receivedCommand instanceof PercentType){
-		val Number percent = (receivedCommand as PercentType).byteValue
-		if(percent == 0){
-			//0 => 0
-			Light_2DDiffusor_Links_hw.sendCommand((receivedCommand as PercentType).byteValue*10)
-		}else{		
-			//exponential! 2^(x/10)
-			val Number abs = Math::pow(2, (percent/10).doubleValue).intValue
-			Light_2DDiffusor_Links_hw.sendCommand(abs)
-		}
-	}
-	else if (receivedCommand==ON){
-		Light_2DDiffusor_Links_hw.sendCommand(1024)
+	if(timer!=null) timer.cancel()
+	
+	var done = false
+	var Number targetPercent
+	if (receivedCommand==ON){
+		targetPercent = 100
 	}
 	else if (receivedCommand==OFF){
-		Light_2DDiffusor_Links_hw.sendCommand(0)
+		targetPercent = 0
+	}
+	else if(receivedCommand instanceof PercentType){
+		targetPercent = (receivedCommand as PercentType).byteValue
+	}
+		
+	var Number currentPercent = Light_2DDiffusor_Links.state as DecimalType
+	
+	//annähern oder fertig
+	var Number nextPercent
+	if(currentPercent > targetPercent) {
+		nextPercent = currentPercent - 1
+	}
+	else if(currentPercent < targetPercent) {
+		nextPercent = currentPercent + 1
+	}
+	else if(currentPercent == targetPercent) {
+		done = true
+	}
+	
+//	logInfo("abc", "Done is "+done.toString())
+	if(!done){ 	
+		
+		var Number nextAbsolute
+		if(nextPercent == 0){
+			//0 => 0
+			nextAbsolute = 0
+		}else{		
+			//exponential! 2^(x/10)
+			nextAbsolute = Math::pow(2, (nextPercent/10).doubleValue).intValue
+		}
+		
+	
+		postUpdate(Light_2DDiffusor_Links, nextPercent)		
+		Light_2DDiffusor_Links_hw.sendCommand(nextAbsolute)
+		
+		val targetPercentFinal = targetPercent
+		timer = createTimer(now.plusMillis(50)) [| sendCommand(Light_2DDiffusor_Links, targetPercentFinal) ]
 	}
 end
