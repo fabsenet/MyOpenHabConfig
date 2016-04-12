@@ -78,7 +78,10 @@ then
 		targetPercent = (receivedCommand as PercentType).byteValue
 	}
 		
-	var Number currentPercent = Light_2DDiffusor_Links.state as DecimalType
+	var Number currentPercent = 0
+	if(Light_2DDiffusor_Links.state instanceof DecimalType){
+		currentPercent = Light_2DDiffusor_Links.state as DecimalType
+	} 
 	
 	//annähern oder fertig
 	var Number nextPercent
